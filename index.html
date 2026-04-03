@@ -3,35 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antigravity Animation</title>
-    <meta name="description" content="A mesmerizing anti-gravity particle animation inspired by Google Antigravity">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Google Antigravity</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="particleCanvas"></canvas>
-    <div id="overlay">
-        <div class="logo-container">
-            <svg class="logo-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M14 2L18 8L14 14L10 8L14 2Z" fill="#4285F4"/>
-                <path d="M14 14L18 8L22 14L18 20L14 14Z" fill="#EA4335"/>
-                <path d="M14 14L10 8L6 14L10 20L14 14Z" fill="#FBBC04"/>
-                <path d="M14 14L18 20L14 26L10 20L14 14Z" fill="#34A853"/>
-            </svg>
-            <span class="logo-text">Antigravity</span>
-        </div>
-        <h1 class="hero-title">Experience liftoff with the<br>next-generation animation</h1>
-        <p class="hero-subtitle">Watch as particles defy gravity in an elegant dance of color and motion</p>
-        <div class="cta-container">
-            <button class="btn-primary" id="interactBtn">
-                <span class="btn-icon">✦</span>
-                Interact with particles
-            </button>
-            <button class="btn-secondary" id="resetBtn">Reset animation</button>
+    <div class="hero">
+        <canvas id="particleCanvas"></canvas>
+        <div class="content">
+            <div class="logo">
+                <img src="nano_banana.png" width="30" height="30" alt="Logo" style="object-fit: contain;"> Google Antigravity
+            </div>
+            <h1>Experience liftoff with the<br>next-generation IDE</h1>
+            <div class="actions">
+                <button class="btn primary">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 2.2727H6.54545V1H0V2.2727ZM7.63636 1.1818L16 0V7.63636H7.63636V1.1818ZM0 8.7272H6.54545V15L0 14.0909V8.7272ZM7.63636 8.7272H16V16L7.63636 14.8182V8.7272Z" fill="white"/>
+                    </svg>
+                    Download for Windows
+                </button>
+                <button class="btn secondary">Explore use cases</button>
+            </div>
         </div>
     </div>
-    <script src="particles.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
