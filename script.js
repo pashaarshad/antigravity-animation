@@ -7,7 +7,9 @@ let mouse = { x: -1000, y: -1000 };
 let isMouseMoving = false;
 let mouseTimeout;
 
-// Colors matching the original Google Antigravity design
+// This tracks the "center of gravity" for the entire formation
+let swarmCenter = { x: 0, y: 0 };
+
 const colors = ['#e91e63', '#9c27b0', '#3f51b5', '#ff9800', '#f44336'];
 
 function resize() {
@@ -15,50 +17,67 @@ function resize() {
     height = window.innerHeight;
     canvas.width = width;
     canvas.height = height;
+    
+    // Set initial center explicitly
+    if (swarmCenter.x === 0 && swarmCenter.y === 0) {
+        swarmCenter.x = width / 2;
+        swarmCenter.y = height / 2;
+    }
     initParticles();
 }
 
 class Particle {
-    constructor(x, y) {
-        this.baseX = x;
-        this.baseY = y;
-        this.x = x;
-        this.y = y;
+    constructor(offsetX, offsetY) {
+        // Offset relative to the swarm center
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        
+        // Initial drawing position
+        this.x = width / 2 + offsetX;
+        this.y = height / 2 + offsetY;
+        
         this.vx = 0;
         this.vy = 0;
         this.color = colors[Math.floor(Math.random() * colors.length)];
-        this.size = Math.random() * 2 + 1; // Slight size variation
+        this.size = Math.random() * 2 + 1;
         this.angle = Math.random() * Math.PI * 2;
-        // Elasticity properties
-        this.friction = 0.85 + Math.random() * 0.05; // Different damping
-        this.spring = 0.05 + Math.random() * 0.05; // Different tension
+        
+        this.friction = 0.85 + Math.random() * 0.05;
+        this.spring = 0.03 + Math.random() * 0.05; // Slightly looser spring for smooth follow
     }
 
     update() {
-        let dx = this.baseX - mouse.x;
-        let dy = this.baseY - mouse.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        let forceDirectionX = dx / distance;
-        let forceDirectionY = dy / distance;
-        
-        // Repulsion radius
-        let maxDistance = 200;
-        let force = (maxDistance - distance) / maxDistance;
+        // Where the particle WANTS to be based on the swarm center
+        let targetX = swarmCenter.x + this.offsetX;
+        let targetY = swarmCenter.y + this.offsetY;
 
-        if (distance < maxDistance) {
-            // Apply repulsive force
-            this.vx += forceDirectionX * force * 5;
-            this.vy += forceDirectionY * force * 5;
+        // --- Mouse Repulsion Logic (The Empty Circle) ---
+        // If mouse is active on screen, push particles away from its exact coordinates
+        let dx = this.x - mouse.x;
+        let dy = this.y - mouse.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // The circle radius where they shouldn't come
+        let repulsionRadius = 180; 
+        
+        if (distance < repulsionRadius) {
+            let forceDirectionX = dx / distance;
+            let forceDirectionY = dy / distance;
+            let force = (repulsionRadius - distance) / repulsionRadius;
+            
+            // Push away vigorously inside the circle
+            this.vx += forceDirectionX * force * 4;
+            this.vy += forceDirectionY * force * 4;
         }
 
-        // Apply spring force towards base position
-        let sDx = this.baseX - this.x;
-        let sDy = this.baseY - this.y;
+        // Apply spring force gently pulling them to their target positions around the center
+        let sDx = targetX - this.x;
+        let sDy = targetY - this.y;
         
         this.vx += sDx * this.spring;
         this.vy += sDy * this.spring;
 
-        // Apply friction
+        // Friction ensures they eventually settle smoothly
         this.vx *= this.friction;
         this.vy *= this.friction;
 
@@ -69,19 +88,21 @@ class Particle {
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        // Rotate points slightly based on movement direction to make them look like "streaks"
-        if(Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1) {
+        
+        // If moving, align the dash with the direction of movement
+        let speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if(speed > 0.1) {
              let rotAngle = Math.atan2(this.vy, this.vx);
              ctx.rotate(rotAngle);
         } else {
-            ctx.rotate(this.angle);
+             ctx.rotate(this.angle);
         }
         
         ctx.fillStyle = this.color;
-        // Drawing an elongated dash
+        // The elongated tail look
         ctx.beginPath();
-        // The original design uses small, pill-like shapes or slanted lines
-        ctx.roundRect(-this.size, -this.size/2, this.size * 3, this.size, this.size/2);
+        let lengthMultiplier = Math.min(speed * 0.5, 4); // Stretch slightly based on speed
+        ctx.roundRect(-this.size - lengthMultiplier, -this.size/2, (this.size * 3) + lengthMultiplier*2, this.size, this.size/2);
         ctx.fill();
         ctx.restore();
     }
@@ -89,30 +110,31 @@ class Particle {
 
 function initParticles() {
     particles = [];
-    // Create a grid-like or spiral arrangement depending on the original,
-    // let's use a radial arrangement to match the "expanding from center/logo" feel
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.max(width, height) * 0.6;
+    const radius = Math.max(width, height) * 0.7;
     
-    // Instead of random, create a structured pattern that gets disturbed
-    for (let i = 0; i < 500; i++) {
-        // Spiral placement
+    for (let i = 0; i < 700; i++) {
+        // Calculate offset from actual center
         let r = Math.random() * radius;
         let theta = Math.random() * Math.PI * 2;
         
-        // Push slightly outwards from the center text area to keep it readable,
-        // although in the real site they interact *behind* the text
+        // Push slightly outwards naturally as well so it's a "cloud"
+        let offsetX = r * Math.cos(theta);
+        let offsetY = r * Math.sin(theta);
         
-        let x = centerX + r * Math.cos(theta);
-        let y = centerY + r * Math.sin(theta);
-        
-        particles.push(new Particle(x, y));
+        particles.push(new Particle(offsetX, offsetY));
     }
 }
 
 function animate() {
     ctx.clearRect(0, 0, width, height);
+
+    // Smoothly interpolate the Swarm Center towards the exact Mouse Position
+    // This gives the "fluidly following the cursor" effect.
+    let followTargetX = mouse.x !== -1000 ? mouse.x : width / 2;
+    let followTargetY = mouse.y !== -1000 ? mouse.y : height / 2;
+
+    swarmCenter.x += (followTargetX - swarmCenter.x) * 0.05;
+    swarmCenter.y += (followTargetY - swarmCenter.y) * 0.05;
 
     particles.forEach(particle => {
         particle.update();
@@ -131,12 +153,12 @@ window.addEventListener('mousemove', (e) => {
     isMouseMoving = true;
     
     clearTimeout(mouseTimeout);
+    // Bring it back to center if idle
     mouseTimeout = setTimeout(() => {
         isMouseMoving = false;
-        // Send mouse far away when idle so particles settle
         mouse.x = -1000;
         mouse.y = -1000;
-    }, 2000); // 2 seconds idle timeout
+    }, 2500);
 });
 
 window.addEventListener('mouseout', () => {
@@ -159,7 +181,6 @@ window.addEventListener('touchend', () => {
     mouse.y = -1000;
 });
 
-
-// Initialization
+// Start loop
 resize();
 animate();
